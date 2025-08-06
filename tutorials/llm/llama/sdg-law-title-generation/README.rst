@@ -21,7 +21,7 @@ Framework <https://docs.nvidia.com/nemo-framework/user-guide/latest/overview.htm
 Objectives
 ----------
 
-This tutorial shows how to perform LoRA PEFT on **Llama 3.1 8B ** using the `Law StackExchange <https://huggingface.co/datasets/ymoslem/Law-StackExchange>`__ with NeMo Framework. Law StackExchange is a dataset of legal questions, question titles, and answers. For this demonstration, we will tune the model on the task of title/subject generation, that is, given a Law StackExchange forum question, auto-generate an appropriate title for it. We will then deploy the LoRA tuned model with NVIDIA NIM for inference.
+This tutorial shows how to perform LoRA PEFT on **Llama 3.1 8B** using the `Law StackExchange <https://huggingface.co/datasets/ymoslem/Law-StackExchange>`__ with NeMo Framework. Law StackExchange is a dataset of legal questions, question titles, and answers. For this demonstration, we will tune the model on the task of title/subject generation, that is, given a Law StackExchange forum question, auto-generate an appropriate title for it. We will then deploy the LoRA tuned model with NVIDIA NIM for inference.
 
 Requirements
 -------------
@@ -31,18 +31,20 @@ Requirements
     * A Docker-enabled environment, with `NVIDIA Container Runtime <https://developer.nvidia.com/container-runtime>`_ installed, which will make the container GPU-aware.
     * `Additional NIM requirements <https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#prerequisites>`_.
 
-* `Authenticate with NVIDIA NGC <https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#ngc-authentication>`_, and download `NGC CLI Tool <https://docs.nvidia.com/nim/large-language-models/latest/getting-started.html#ngc-cli-tool>`_. You will use this tool to download the model and customize it with NeMo Framework.
+* `Authenticate with NVIDIA NGC <https://org.ngc.nvidia.com/setup/api-key>`_, and obtain an NGC API key.
 
-* Get your Hugging Face `access token <https://huggingface.co/docs/hub/en/security-tokens>`_, which will be used to obtain the tokenizer required during training.
-
-
-* (Optional) **SDG to augment the dataset:** This tutorial can also be considered as a continuation of the Data Curation tutorial - `Curating Datasets for Parameter Efficient Fine-tuning with Synthetic Data Generation <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__. It demonstrates various filtering and processing operations on the records to improve data quality, as well as (optional) synthetic data generation (SDG) to augment the dataset. Please follow this tutorial to obtain the resulting dataset needed.
+* Get your Hugging Face `access token <https://huggingface.co/docs/hub/en/security-tokens>`_, which will be used to obtain certain artifacts required during training.
 
 
-(Optional) `Process the Dataset with NeMo Curator <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__
--------------------------------------------------------------------------------------------------------
+(Optional) `Synthetic Data Generation to augment the dataset with NeMo Curator <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-1. Save the dataset in the current directory. You will have obtained `law-qa-{train/val/test}.jsonl` splits resulting from following the abovementioned `data curation tutorial <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__.
+Note that this step is entirely optional. You may proceed to the next step if you do not want to synthetically augment the dataset, and use the original dataset instead.
+
+1. This tutorial can be considered as a continuation of the NeMo Curator tutorial - `Curating Datasets for Parameter Efficient Fine-tuning with Synthetic Data Generation <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__. It demonstrates various filtering and processing operations on the records to improve data quality, as well as synthetic data generation (SDG) to augment the dataset. Please follow this tutorial to obtain the resulting dataset.
+
+
+2. Save the dataset in the current directory. You will have obtained `law-qa-{train/val/test}.jsonl` splits resulting from following the abovementioned `data curation tutorial <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__.
 
 .. code:: bash
 
@@ -52,38 +54,33 @@ Requirements
    cp <path/to/generated/data/splits>.jsonl curated-data/.
 
 
+3. In the LoRA notebook, for defining the DataModule, follow Step 2 (Option 2) to use the pre-existing dataset.
+
+
 `Create a LoRA Adapter with NeMo Framework <./llama3-sdg-lora-nemofw.ipynb>`__
 ------------------------------------------------------------------------------
 
 For LoRA-tuning the model, you will use the NeMo Framework which is available as a `docker container <https://catalog.ngc.nvidia.com/orgs/nvidia/containers/nemo>`__.
 
 
-1. Download the `Llama 3.1 8B Instruct .nemo <https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/llama-3_1-8b-instruct-nemo>`__ from NVIDIA NGC using the NGC CLI. The following command saves the ``.nemo`` format model in a folder named ``llama-3_1-8b-instruct-nemo_v1.0`` in the current directory. You can specify another path using the ``-d`` option in the CLI tool.
+1. Run the container using the following command. It is assumed that you have the dataset, notebook(s), and the `llama-3.1-8b-instruct` model available in the current directory. If not, mount the appropriate folder to ``/workspace``.
 
 .. code:: bash
 
-   ngc registry model download-version "nvidia/nemo/llama-3_1-8b-instruct-nemo:1.0"
-
-
-
-2. Run the container using the following command. It is assumed that you have the dataset, notebook(s), and the `llama-3.1-8b-instruct` model available in the current directory. If not, mount the appropriate folder to ``/workspace``.
-
-.. code:: bash
-
-   export FW_VERSION=24.05.llama3.1
+   export FW_VERSION=24.07
 
 
 .. code:: bash
 
    docker run \
      --gpus all \
-     --shm-size=2g \
+     --shm-size=8g \
      --net=host \
      --ulimit memlock=-1 \
      --rm -it \
      -v ${PWD}:/workspace \
      -w /workspace \
-     -v ${PWD}/results:/results \
+     -v ${PWD}/nemo-experiments:/nemo-experiments \
      nvcr.io/nvidia/nemo:$FW_VERSION bash
 
 3. From within the container, start the Jupyter lab:
@@ -92,7 +89,7 @@ For LoRA-tuning the model, you will use the NeMo Framework which is available as
 
    jupyter lab --ip 0.0.0.0 --port=8888 --allow-root
 
-4. Then, navigate to `this notebook <./llama3-sdg-lora-nemofw.ipynb>`__.
+4. Then, navigate to `this notebook <./llama3-sdg-lora-nemofw.ipynb>`__. The result of this notebook will be a LoRA adapter checkpoint in the ``nemo-experiments`` folder.
 
 
 `Deploy the LoRA Inference Adapter with NVIDIA NIM <./llama3-sdg-lora-deploy-nim.ipynb>`__
@@ -102,9 +99,9 @@ This procedure demonstrates how to deploy the trained LoRA adapter with NVIDIA N
 
 1. Prepare the LoRA model store.
 
-After training is complete, that LoRA model checkpoint will be created at ``./results/Meta-llama3.1-8B-Instruct-titlegen/checkpoints/megatron_gpt_peft_lora_tuning.nemo``, assuming default paths in the first notebook weren’t modified.
+After training is complete, that LoRA model checkpoint will be created at ``./nemo-experiments/models/llama-3.1-8b-peft-hf``, assuming default paths in the first notebook weren’t modified.
 
-To ensure the model store is organized as expected, create a folder named ``llama3.1-8b-law-titlegen`` under a model store directory, and move your ``.nemo`` checkpoint there.
+To ensure the model store is organized as expected, create a folder named ``llama3.1-8b-law-titlegen`` under a model store directory, and move your LoRA adapter checkpoint there.
 
 .. code:: bash
 
@@ -113,17 +110,18 @@ To ensure the model store is organized as expected, create a folder named ``llam
 
    mkdir -p $LOCAL_PEFT_DIRECTORY/llama3.1-8b-law-titlegen
 
-   # Ensure the source path is correct
-   cp ./results/Meta-llama3.1-8B-Instruct-titlegen/checkpoints/megatron_gpt_peft_lora_tuning.nemo $LOCAL_PEFT_DIRECTORY/llama3.1-8b-law-titlegen
+   # Ensure the source path is correct (this is the path to the LoRA adapter checkpoint from the first notebook)
+   cp $(pwd)/nemo-experiments/models/llama-3.1-8b-peft-hf/* $LOCAL_PEFT_DIRECTORY/llama3.1-8b-law-titlegen/.
 
 
 Ensure that the LoRA model store directory follows this structure: the model name would be name of the sub-folder containing the ``.nemo`` file.
 
 ::
-
    <$LOCAL_PEFT_DIRECTORY>
    └── llama3.1-8b-law-titlegen
-       └── megatron_gpt_peft_lora_tuning.nemo
+      ├── README.md
+      ├── adapter_config.json
+      └── adapter_model.safetensors
 
 
 Note that NIM supports deployment of multiple LoRA adapters over the same base model. As such, if you have any other adapters for other tasks trained or available, you can place them in separate sub-folders under `$LOCAL_PEFT_DIRECTORY`.
@@ -136,8 +134,10 @@ From your host OS environment, start the NIM docker container while mounting the
 
    # Set these configurations
    export NGC_API_KEY=<YOUR_NGC_API_KEY>
-   export NIM_PEFT_REFRESH_INTERVAL=3600  # (in seconds) will check NIM_PEFT_SOURCE for newly added models in this interval
    export NIM_CACHE_PATH=</path/to/NIM-model-store-cache>  # Model artifacts (in container) are cached in this directory
+   export NIM_PEFT_REFRESH_INTERVAL=3600 # (in seconds) will check NIM_PEFT_SOURCE for newly added models in this interval
+   export CONTAINER_NAME=meta-llama3.1-8b-LLM-NIM
+   export NIM_SERVED_MODEL_NAME=llama3.1-8b-law-titlegen
 
 
 .. code:: bash
@@ -146,7 +146,6 @@ From your host OS environment, start the NIM docker container while mounting the
    chmod -R 777 $NIM_CACHE_PATH
 
    export NIM_PEFT_SOURCE=/home/nvs/loras # Path to LoRA models internal to the container
-   export CONTAINER_NAME=meta-llama3.1-8b-instruct
 
    docker run -it --rm --name=$CONTAINER_NAME \
          --gpus all \
@@ -154,12 +153,24 @@ From your host OS environment, start the NIM docker container while mounting the
          --shm-size=16GB \
          -e NGC_API_KEY \
          -e NIM_PEFT_SOURCE \
+         -e NIM_PEFT_REFRESH_INTERVAL \
+         -e NIM_SERVED_MODEL_NAME \
          -v $NIM_CACHE_PATH:/opt/nim/.cache \
          -v $LOCAL_PEFT_DIRECTORY:$NIM_PEFT_SOURCE \
-         nvcr.io/nim/meta/llama-3.1-8b-instruct:1.1.0
+         nvcr.io/nim/meta/llama-3.1-8b-base:latest
 
-The first time you run the command, it will download the model and cache it in ``$NIM_CACHE_PATH`` so subsequent deployments are even faster. There are several options to configure NIM other than the ones listed above. You can find a full list in the `NIM configuration <https://docs.nvidia.com/nim/large-language-models/latest/configuration.html>`__ documentation.
 
+
+There are several options to configure NIM other than the ones listed above. You can find a full list in the `NIM configuration <https://docs.nvidia.com/nim/large-language-models/latest/configuration.html>`__ documentation.
+
+.. note::
+
+   The first time you run the above Docker command, the model will be downloaded and cached in ``$NIM_CACHE_PATH``. This ensures that subsequent deployments are faster, as the model does not need to be downloaded again.
+
+
+.. note::
+
+   The first time you run the above Docker command, the model will be downloaded and cached in ``$NIM_CACHE_PATH``. This ensures that subsequent deployments are faster, as the model does not need to be downloaded again.
 
 3. Start the notebook.
 
