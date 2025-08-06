@@ -21,13 +21,10 @@ Framework <https://docs.nvidia.com/nemo-framework/user-guide/latest/overview.htm
 Objectives
 ----------
 
-This tutorial shows how to perform LoRA PEFT on **Llama 3.1 8B Instruct** using a synthetically augmented version of `Law StackExchange <https://huggingface.co/datasets/ymoslem/Law-StackExchange>`__ with NeMo Framework. Law StackExchange is a dataset of legal questions, question titles, and answers. For this demonstration, we will tune the model on the task of title/subject generation, that is, given a Law StackExchange forum question, auto-generate an appropriate title for it. We will then deploy the LoRA tuned model with NVIDIA NIM for inference.
+This tutorial shows how to perform LoRA PEFT on **Llama 3.1 8B ** using the `Law StackExchange <https://huggingface.co/datasets/ymoslem/Law-StackExchange>`__ with NeMo Framework. Law StackExchange is a dataset of legal questions, question titles, and answers. For this demonstration, we will tune the model on the task of title/subject generation, that is, given a Law StackExchange forum question, auto-generate an appropriate title for it. We will then deploy the LoRA tuned model with NVIDIA NIM for inference.
 
 Requirements
 -------------
-
-* **Obtain the dataset:** This tutorial is a continuation of the Data Curation tutorial - `Curating Datasets for Parameter Efficient Fine-tuning with Synthetic Data Generation <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__. It demonstrates various filtering and processing operations on the records to improve data quality, as well as (optional) synthetic data generation (SDG) to augment the dataset. Please follow this tutorial to obtain the resulting dataset needed.
-
 
 * System Configuration
     * Access to at least 1 NVIDIA GPU with a cumulative memory of at least 80GB, for example: 1 x H100-80GB or 1 x A100-80GB.
@@ -39,7 +36,10 @@ Requirements
 * Get your Hugging Face `access token <https://huggingface.co/docs/hub/en/security-tokens>`_, which will be used to obtain the tokenizer required during training.
 
 
-`Process the Dataset with NeMo Curator <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__
+* (Optional) **SDG to augment the dataset:** This tutorial can also be considered as a continuation of the Data Curation tutorial - `Curating Datasets for Parameter Efficient Fine-tuning with Synthetic Data Generation <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__. It demonstrates various filtering and processing operations on the records to improve data quality, as well as (optional) synthetic data generation (SDG) to augment the dataset. Please follow this tutorial to obtain the resulting dataset needed.
+
+
+(Optional) `Process the Dataset with NeMo Curator <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__
 -------------------------------------------------------------------------------------------------------
 
 1. Save the dataset in the current directory. You will have obtained `law-qa-{train/val/test}.jsonl` splits resulting from following the abovementioned `data curation tutorial <https://github.com/NVIDIA/NeMo-Curator/tree/main/tutorials/peft-curation-with-sdg>`__.
